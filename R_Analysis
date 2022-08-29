@@ -1,0 +1,57 @@
+# Loading necessary packages
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+
+# Importing datasets
+aug21_df <- read_csv("202108-divvy-tripdata.csv")
+sep21_df <- read_csv("202109-divvy-tripdata.csv") 
+oct21_df <- read_csv("202110-divvy-tripdata.csv")
+nov21_df <- read_csv("202111-divvy-tripdata.csv") 
+dec21_df <- read_csv("202112-divvy-tripdata.csv")
+jan22_df <- read_csv("202201-divvy-tripdata.csv") 
+feb22_df <- read_csv("202202-divvy-tripdata.csv") 
+mar22_df <- read_csv("202203-divvy-tripdata.csv")
+apr22_df <- read_csv("202204-divvy-tripdata.csv")
+may22_df <- read_csv("202205-divvy-tripdata.csv") 
+jun22_df <- read_csv("202206-divvy-tripdata.csv") 
+jul22_df <- read_csv("202207-divvy-tripdata.csv")
+
+# Merging all months into one dataset
+full_year_df <- rbind (aug21_df, sep21_df, oct21_df, nov21_df, dec21_df, jan22_df, feb22_df, mar22_df, apr22_df, may22_df, jun22_df, jul22_df)
+
+# Creating new column for "ride length"
+full_year_df$ride_length <- difftime(full_year_df$ended_at, full_year_df$started_at, units = "mins")
+
+# Creating columns for: day of week, month, day, year, time, hour
+full_year_df$date <- as.Date(full_year_df$started_at) #default format is yyyy-mm-dd, use start date
+full_year_df$day_of_week <- wday(full_year_df$started_at) #calculate the day of the week 
+full_year_df$day_of_week <- format(as.Date(full_year_df$date), "%A") #create column for day of week
+full_year_df$month <- format(as.Date(full_year_df$date), "%m")#create column for month
+
+# Data cleaning
+full_year_df <- na.omit(full_year_df) #remove rows with NA values
+full_year_df <- distinct(full_year_df) #remove duplicate rows 
+full_year_df <- full_year_df[!(full_year_df$ride_length < 1),] #remove rides <1 minute
+mean(full_year_df$ride_length) # mean of 18.50598 minutes
+sd(full_year_df$ride_length, na.rm = TRUE) # SD of 82.00973 minutes
+# Anything >= 186.518345 is an outlier (2.5 SD)
+full_year_df <- full_year_df[!(full_year_df$ride_length >= 186.518345),] #remove outliers
+full_year_df <- full_year_df %>%  #remove columns not needed
+  select(-c(ride_id, start_station_id, end_station_id, start_lat, start_lng, end_lat, end_lng, started_at, ended_at))
+
+# Create categories for ride_length
+full_year_df <-full_year_df %>% mutate(length_cat = 
+                                         case_when(ride_length >=1 & ride_length <10 ~ "1-10 min",
+                                                   ride_length >=10 & ride_length <30 ~ "10-30 min",
+                                                   ride_length >=30 & ride_length <60  ~ "30-60 min",
+                                                   ride_length >=60 & ride_length <120 ~ "60-120 min",
+                                                   ride_length >=120 & ride_length <186.518345 ~ "2-3 hrs")
+)
+# Make chart of ride_length categories, with member/casual splits
+ggplot(data = full_year_df) + geom_bar(mapping = aes(x=length_cat, fill=member_casual))
+# Make chart of rides per month, with member/casual splits
+ggplot(data = full_year_df) + geom_bar(mapping = aes(x=month, fill=member_casual))
+# Make chart of rides per bike type, with member/casual splits
+ggplot(data = full_year_df) + geom_bar(mapping = aes(x=rideable_type, fill=member_casual))
+ggplot(data = full_year_df) + geom_bar(mapping = aes(x=day_of_week, fill=member_casual))
