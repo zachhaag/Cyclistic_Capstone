@@ -23,11 +23,11 @@ full_year_df <- rbind (aug21_df, sep21_df, oct21_df, nov21_df, dec21_df, jan22_d
 # Creating new column for "ride length"
 full_year_df$ride_length <- difftime(full_year_df$ended_at, full_year_df$started_at, units = "mins")
 
-# Creating columns for: day of week, month, day, year, time, hour
-full_year_df$date <- as.Date(full_year_df$started_at) #default format is yyyy-mm-dd, use start date
-full_year_df$day_of_week <- wday(full_year_df$started_at) #calculate the day of the week 
-full_year_df$day_of_week <- format(as.Date(full_year_df$date), "%A") #create column for day of week
-full_year_df$month <- format(as.Date(full_year_df$date), "%m")#create column for month
+# Creating columns for: day of week, month
+full_year_df$date <- as.Date(full_year_df$started_at) #Use start date
+full_year_df$day_of_week <- wday(full_year_df$started_at) #determine day of week 
+full_year_df$day_of_week <- format(as.Date(full_year_df$date), "%A") #Create column for day of week
+full_year_df$month <- format(as.Date(full_year_df$date), "%m") #Create column for month
 
 # Data cleaning
 full_year_df <- na.omit(full_year_df) #remove rows with NA values
